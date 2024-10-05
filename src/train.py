@@ -16,14 +16,14 @@ def pokemon_battle_training(battle_class, episodes=1000, team_1=None, team_2=Non
     
     for e in range(episodes):
         # Create a battle object
-        battle = battle_class(doubles=True, debug=False)
+        battle = battle_class(doubles=False, debug=False)
 
         # Join teams to the battle
         battle.join(side_id=0, team=team_1)
         battle.join(side_id=1, team=team_2)
 
-        state_1 = encode_battle_state(battle, 0)  # Encode battle state for side 0
-        state_2 = encode_battle_state(battle, 1)  # Encode battle state for side 1
+        state_1 = encode_battle_state(battle)  # Encode battle state for side 0
+        state_2 = encode_battle_state(battle)  # Encode battle state for side 1
         
         done = False
         turn = 0
@@ -43,8 +43,8 @@ def pokemon_battle_training(battle_class, episodes=1000, team_1=None, team_2=Non
             battle.do_turn()
             
             # Update state for both sides
-            next_state_1 = encode_battle_state(battle, 0)
-            next_state_2 = encode_battle_state(battle, 1)
+            next_state_1 = encode_battle_state(battle)
+            next_state_2 = encode_battle_state(battle)
             
             # Check for rewards and game status
             reward_1, reward_2, done = evaluate_battle_outcome(battle)
@@ -94,26 +94,29 @@ def encode_battle_state(battle: sim.Battle):
     state["active_pokemon_1"] = battle.p1.pokemon.index(battle.p1.active_pokemon[0])  # Index of active pokemon in battle.p1.active_pokemon
     state["active_pokemon_2"] = battle.p2.pokemon.index(battle.p2.active_pokemon[0])
 
-    state["weather"] = battle.weather
+    weather = ["clear","sunny", "rainy", "sandstorm", "hail"]
+    state["weather"] = weather.index(battle.weather)
     state["weather_turns"] = battle.weather_n
 
-    state["terrain"] = battle.terrain
+    terrains = ["","grassy", "electric", "misty", "psychic"]
+    state["terrain"] = terrains.index(battle.terrain)
 
-    state["p1_spikes"] = battle.p1.spikes
-    state["p1_toxic_spikes"] = battle.p1.toxic_spikes
-    state["p1_stealth_rock"] = battle.p1.stealth_rock
-    state["p1_sticky_web"] = battle.p1.sticky_web
-    state["p1_tailwind"] = battle.p1.tailwind
+
+    state["p1_spikes"] = int(battle.p1.spikes)
+    state["p1_toxic_spikes"] = int(battle.p1.toxic_spikes)
+    state["p1_stealth_rock"] = int(battle.p1.stealth_rock)
+    state["p1_sticky_web"] = int(battle.p1.sticky_web)
+    state["p1_tailwind"] = int(battle.p1.tailwind)
     state["p1_tailwind_n"] = battle.p1.tailwind_n
 
-    state["p2_spikes"] = battle.p2.spikes
-    state["p2_toxic_spikes"] = battle.p2.toxic_spikes
-    state["p2_stealth_rock"] = battle.p2.stealth_rock
-    state["p2_sticky_web"] = battle.p2.sticky_web
-    state["p2_tailwind"] = battle.p2.tailwind
+    state["p2_spikes"] = int(battle.p2.spikes)
+    state["p2_toxic_spikes"] = int(battle.p2.toxic_spikes)
+    state["p2_stealth_rock"] = int(battle.p2.stealth_rock)
+    state["p2_sticky_web"] = int(battle.p2.sticky_web)
+    state["p2_tailwind"] = int(battle.p2.tailwind)
     state["p2_tailwind_n"] = battle.p2.tailwind_n
 
-    state["trick_room"] = battle.trickroom
+    state["trick_room"] = int(battle.trickroom)
     state["trick_room_turns"] = battle.trickroom_n
 
     pokemon_statuses = ["burn", "poison", "paralysis", "freeze", "sleep", ""]
@@ -168,9 +171,30 @@ def encode_battle_state(battle: sim.Battle):
 # Helper function to evaluate the battle outcome and return rewards
 def evaluate_battle_outcome(battle):
     # Example: Evaluate based on remaining Pokémon, damage dealt, etc.
-    reward_1 = np.random.randint(-10, 10)  # Replace with actual reward logic
-    reward_2 = np.random.randint(-10, 10)
-    done = False  # Replace with actual game over condition
+    hp1_heuristic = 0  # Replace with actual reward logic
+    hp2_heuristic = 0
+    done = battle.ended  # Replace with actual game over condition
+    
+    for pokemon in battle.p1.pokemon:
+        if pokemon.hp > 0:
+            hp1_heuristic += 1
+            hp1_heuristic += pokemon.hp / pokemon.maxhp
+            if pokemon.status != '':
+                # TODO: this should have different rewards for different statuses
+                hp2_heuristic += 0.5*pokemon.hp / pokemon.maxhp
+
+    for pokemon in battle.p2.pokemon:
+        if pokemon.hp > 0:
+            hp2_heuristic += 1
+            hp2_heuristic += pokemon.hp / pokemon.maxhp
+            if pokemon.status != '':
+                hp1_heuristic += 0.5*pokemon.hp / pokemon.maxhp
+
+    reward_1 = hp1_heuristic - hp2_heuristic
+    reward_2 = hp2_heuristic - hp1_heuristic
+    if done:
+        reward_1 += 10 if battle.winner == battle.name1 else -10
+        reward_2 += 10 if battle.winner == battle.name2 else -10
     return reward_1, reward_2, done
 
 # Helper function to create a decision (move/switch) based on action
