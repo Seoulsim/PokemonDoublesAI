@@ -3,11 +3,12 @@ from tools.pick_six import generate_vgc_team, generate_team
 from src.model import PokemonDQN
 import numpy as np
 import sim.pokemon as Pokemon
+from sim.player import *
 
 # Pokemon Battle AI training with Battle class integration
 
 
-def pokemon_battle_training(battle_class, episodes=1000, team_1=None, team_2=None):
+def pokemon_battle_training(episodes=1000, team_1=None, team_2=None):
     state_size = 128  # Define according to your battle state encoding
     action_size = 10  # Define according to available actions (moves, switches)
     
@@ -16,7 +17,7 @@ def pokemon_battle_training(battle_class, episodes=1000, team_1=None, team_2=Non
     
     for e in range(episodes):
         # Create a battle object
-        battle = battle_class(doubles=False, debug=False)
+        battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=True)
 
         # Join teams to the battle
         battle.join(side_id=0, team=team_1)
@@ -31,12 +32,12 @@ def pokemon_battle_training(battle_class, episodes=1000, team_1=None, team_2=Non
         while not done:
             # AI 1 makes a move
             action_1 = agent_1.act(state_1)
-            decision_1 = create_decision(action_1)  # Create move/switch decision for AI 1
+            decision_1 = create_decision(battle.p1, action_1)  # Create move/switch decision for AI 1
             battle.choose(0, decision_1)
 
             # AI 2 makes a move
             action_2 = agent_2.act(state_2)
-            decision_2 = create_decision(action_2)  # Create move/switch decision for AI 2
+            decision_2 = create_decision(battle.p2, action_2)  # Create move/switch decision for AI 2
             battle.choose(1, decision_2)
             
             # Execute turn
@@ -198,10 +199,35 @@ def evaluate_battle_outcome(battle):
     return reward_1, reward_2, done
 
 # Helper function to create a decision (move/switch) based on action
-def create_decision(action):
+def create_decision(P:Player, action):
+    # Action is a Q array of length 9 returned by the model
     # Example placeholder: action 0 is a move, action 1 is a switch, etc.
+    # convert array of length 9 to a move where index 0 - 3 are moves and 4 - 8 are switches
+    n = len(P.active_pokemon)
 
-    pass
+    for i in range(n):
+
+        if P.request == 'switch':
+            lst = [(P.pokemon[i], action[i + 4]) for i in range(n)]
+            sorted_pokemon = sorted(lst, key=lambda x: x[1], reverse=True)
+            for pokemon in sorted_pokemon:
+                if pokemon.fainted == False:
+                    P.choice = Decision('switch', pokemon.position)
+                    break
+
+        elif P.request == 'pass':
+            P.choice = Decision('pass', 0)
+
+        elif P.request == 'move':
+            lst = [(P.active_pokemon[0].moves[i], action[i]) for i in range(n)]
+            sorted_moves = sorted(lst, key=lambda x: x[1], reverse=True)
+            if len(P.active_pokemon[i].moves) > 0:
+                moves = len(P.active_pokemon[i].moves)-1
+                rand_int = random.choice(moves, 1, action[:moves])
+                P.choice = Decision('move', rand_int)
+            else:
+                sys.exit('No moves!')
+    return 
 
 # pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
 

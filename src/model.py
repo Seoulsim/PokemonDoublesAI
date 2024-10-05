@@ -4,10 +4,11 @@ from keras import layers, models
 import random
 from collections import deque
 
+
 class PokemonDQN:
-    def __init__(self, state_size, action_size, learning_rate=0.001, gamma=0.99, max_memory_size=2000, batch_size=32):
+    def __init__(self, action_size = 9, state_size = 45, learning_rate=0.001, gamma=0.99, max_memory_size=2000, batch_size=32):
         self.state_size = state_size  # State: representation of the Pokémon battle, targeting, etc.
-        self.action_size = action_size  # Action: selecting move and target based on the battle mode
+        self.action_size = action_size  # 4 moves and up to 5 switches (SINGLE BATTLES ONLY)
         self.memory = deque(maxlen=max_memory_size)
         self.gamma = gamma  # discount factor
         self.learning_rate = learning_rate
@@ -40,9 +41,13 @@ class PokemonDQN:
     def act(self, state):
         # Epsilon-greedy action selection
         if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)  # Exploration: Random action
+            return  np.random.rand(self.action_size)  # Exploration: Random action
         q_values = self.model.predict(np.expand_dims(state, axis=0))  # Exploitation: Choose action with highest Q-value
-        return np.argmax(q_values[0])
+
+        # choose action based on probability using q_values
+        # choice = np.random.choice(self.action_size, p=q_values)
+
+        return q_values
 
     def replay(self):
         # If not enough samples in memory, return early
