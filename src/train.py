@@ -1,6 +1,8 @@
-from sim import sim as sim
-from tools.pick_six import generate_vgc_team   
-from model import PokemonDQN
+import sim.sim as sim
+from tools.pick_six import generate_vgc_team, generate_team
+from src.model import PokemonDQN
+import numpy as np
+import sim.pokemon as Pokemon
 
 # Pokemon Battle AI training with Battle class integration
 
@@ -69,10 +71,98 @@ def pokemon_battle_training(battle_class, episodes=1000, team_1=None, team_2=Non
     agent_2.save('pokemon_dqn_2.h5')
 
 # Helper function to encode the battle state into a usable format for the model
-def encode_battle_state(battle, side_id):
+def encode_battle_state(battle: sim.Battle):
     # Example placeholder for state encoding logic
     # Include team info, current Pokémon, HP, moves, etc.
-    state = np.random.random(128)  # Replace with actual encoding logic
+
+    # Encoding by index:
+
+    # 1: active pokemon player 1
+    # 2: active pokemon player 2
+    # 3 - 13: Possible field conditions (weather, terrain, spikes, trickroom, etc)
+    # pokemon stats = hp, attack, defense, special attack, special defense, speed, accuracy, evasion * 12 pokemon = 
+    # 14 - 110: pokemon current stats accounting for boosts in the order of maxhp, current hp, attack, defense, special attack, special defense, speed, accuracy, evasion
+    # DONT ACTUALLY NEED TO ENCODE ALL OF THIS IF WE'RE TRAINING FOR ONE SPECIFIC MATCHUP
+    # 
+    # Can be simplified to only use the active pokemon and their stats + the hp of pokemon on bench
+    # ignore PP for simplicity
+    # pokemon stats = curret hp, attack, defense, special attack, special defense, speed, accuracy, evasion * 2 + current hp of bench pokemon = 10 + 16 = 26
+    # 14 - 40: pokemon stats + bench stats
+
+    state = {}
+
+    state["active_pokemon_1"] = battle.p1.pokemon.index(battle.p1.active_pokemon[0])  # Index of active pokemon in battle.p1.active_pokemon
+    state["active_pokemon_2"] = battle.p2.pokemon.index(battle.p2.active_pokemon[0])
+
+    state["weather"] = battle.weather
+    state["weather_turns"] = battle.weather_n
+
+    state["terrain"] = battle.terrain
+
+    state["p1_spikes"] = battle.p1.spikes
+    state["p1_toxic_spikes"] = battle.p1.toxic_spikes
+    state["p1_stealth_rock"] = battle.p1.stealth_rock
+    state["p1_sticky_web"] = battle.p1.sticky_web
+    state["p1_tailwind"] = battle.p1.tailwind
+    state["p1_tailwind_n"] = battle.p1.tailwind_n
+
+    state["p2_spikes"] = battle.p2.spikes
+    state["p2_toxic_spikes"] = battle.p2.toxic_spikes
+    state["p2_stealth_rock"] = battle.p2.stealth_rock
+    state["p2_sticky_web"] = battle.p2.sticky_web
+    state["p2_tailwind"] = battle.p2.tailwind
+    state["p2_tailwind_n"] = battle.p2.tailwind_n
+
+    state["trick_room"] = battle.trickroom
+    state["trick_room_turns"] = battle.trickroom_n
+
+    pokemon_statuses = ["burn", "poison", "paralysis", "freeze", "sleep", ""]
+
+    active_pokemons = battle.p1.active_pokemon
+    for p in active_pokemons:
+        for field in dir(p):
+            if not field.startswith('__'):
+                if type(field) == int:
+                    state[field] = getattr(p, field)
+                elif type(field) == bool:
+                    state[field] = int(getattr(p, field))
+
+        state["pokemon_1_attack"] = Pokemon.get_attack(p, weather = battle.weather, crit = False)
+        state["pokemon_1_defense"] = Pokemon.get_defense(p, terrain = battle.terrain, crit = False)
+        state["pokemon_1_specialattack"] = Pokemon.get_specialattack(p, weather = battle.weather, crit = False)
+        state["pokemon_1_specialdefense"] = Pokemon.get_specialdefense(p, weather = battle.weather, crit = False)
+        state["pokemon_1_speed"] = Pokemon.get_speed(p, weather = battle.weather, terrain = battle.terrain, trickroom = battle.trickroom, tailwind = battle.p1.tailwind)
+        state["pokemon_1_accuracy"] = Pokemon.get_accuracy(p)
+        state["pokemon_1_evasion"] = Pokemon.get_evasion(p)
+
+    active_pokemons = battle.p2.active_pokemon
+    for p in active_pokemons:
+        for field in dir(p):
+            if not field.startswith('__'):
+                if type(field) == int:
+                    state[field] = getattr(p, field)
+                elif type(field) == bool:
+                    state[field] = int(getattr(p, field))
+
+        state["pokemon_2_attack"] = Pokemon.get_attack(p, weather = battle.weather, crit = False)
+        state["pokemon_2_defense"] = Pokemon.get_defense(p, terrain = battle.terrain, crit = False)
+        state["pokemon_2_specialattack"] = Pokemon.get_specialattack(p, weather = battle.weather, crit = False)
+        state["pokemon_2_specialdefense"] = Pokemon.get_specialdefense(p, weather = battle.weather, crit = False)
+        state["pokemon_2_speed"] = Pokemon.get_speed(p, weather = battle.weather, terrain = battle.terrain, trickroom = battle.trickroom, tailwind = battle.p2.tailwind)
+        state["pokemon_2_accuracy"] = Pokemon.get_accuracy(p)
+        state["pokemon_2_evasion"] = Pokemon.get_evasion(p)
+
+    for pokemon in battle.p1.bench:
+        state["pokemon_1_bench_" + str(battle.p1.bench.index(pokemon))] = pokemon.hp
+        state["pokemon_1_status"] = pokemon_statuses.index(pokemon.status)
+
+    for pokemon in battle.p2.bench:
+        state["pokemon_2_bench_" + str(battle.p2.bench.index(pokemon))] = pokemon.hp
+        state["pokemon_2_status"] = pokemon_statuses.index(pokemon.status)
+
+    print(state.values())
+    print(len(state))
+    
     return state
 
 # Helper function to evaluate the battle outcome and return rewards
@@ -86,28 +176,15 @@ def evaluate_battle_outcome(battle):
 # Helper function to create a decision (move/switch) based on action
 def create_decision(action):
     # Example placeholder: action 0 is a move, action 1 is a switch, etc.
-    if action == 0:
-        return data.dex.Decision('move', 0)  # Example: Move 1
-    elif action == 1:
-        return data.dex.Decision('switch', 0)  # Example: Switch to Pokémon 1
-    # Add other actions as necessary
-    return data.dex.Decision('move', 0)  # Default move action
 
-# Example usage: simulate Pokémon battles and train DQNs
-team_1 = {  # JSON representation of team 1
-    "name": "Team 1",
-    "pokemon": [
-        {"species": "pikachu", "moves": ["thunderbolt", "quickattack", "iron_tail", "thunder"], "evs": [0, 252, 0, 0, 4, 252], "ability": "static", "item": "lightball"},
-        # Add more Pokémon to the team...
-    ]
-}
-team_2 = {  # JSON representation of team 2
-    "name": "Team 2",
-    "pokemon": [
-        {"species": "charizard", "moves": ["flamethrower", "dragonclaw", "airslash", "roost"], "evs": [0, 252, 0, 0, 4, 252], "ability": "blaze", "item": "charizardite_x"},
-        # Add more Pokémon to the team...
-    ]
-}
+    pass
 
-# Replace BattleClass with the actual battle class used for simulations
-pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
+# pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
+
+teams = []
+for i in range(2):
+    teams.append(sim.dict_to_team_set(generate_team()))
+
+battle = sim.Battle('single', 'Red', teams[0], 'Blue', teams[1], debug=True)
+
+encode_battle_state(battle)
