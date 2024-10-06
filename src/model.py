@@ -20,7 +20,7 @@ class PokemonDQN:
         
         # Epsilon-greedy parameters
         self.epsilon = 1.0  # exploration rate
-        self.epsilon_min = 0.01
+        self.epsilon_min = 0.001
         self.epsilon_decay = 0.99
         
         # Build model
@@ -36,7 +36,8 @@ class PokemonDQN:
 
         # Compile model with Mean Squared Error loss and Adam optimizer
         # model.compile(optimizer=tf.keras.optimizers.Adam(lr=self.learning_rate), loss='mse')
-        model.compile(optimizer='adam', loss='mse')
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate, clipnorm=1)
+        model.compile(optimizer=optimizer, loss='mse')
         return model
 
     def remember(self, state, action, reward, next_state, done):
@@ -45,6 +46,7 @@ class PokemonDQN:
 
     def act(self, state):
         # Epsilon-greedy action selection
+        
         if np.random.rand() <= self.epsilon:
         # if np.random.rand() <= -100:
 
@@ -91,6 +93,7 @@ class PokemonDQN:
         # Decay epsilon to reduce exploration over time
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+        return history.history['loss'][0]
 
     def load(self, name):
         # Load model from file

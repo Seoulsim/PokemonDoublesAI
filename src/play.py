@@ -10,88 +10,89 @@ from util.parser import parse_pokemon_file
 # Pokemon Battle AI training with Battle class integration
 
 
-def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
+def start_battle(team_1=None, team_2=None, model_path   = None):
 
-    print(team_1)
-    print(team_2)
-    
     agent_1 = PokemonDQN()
-    agent_2 = PokemonDQN()
-    
-    done_1 = False
-    done_2 = False
+    # Create a battle object
+    battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=False)
+    if model_path is not None:
+        agent_1.model.load_weights(model_path)
 
-    i = 0
-
-    for e in range(episodes):
-        # Create a battle object
-        battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=False)
-
-        state_1 = encode_battle_state(battle)  # Encode battle state for side 0
-        state_2 = encode_battle_state(battle)  # Encode battle state for side 1
+    while True:
+        # AI 1 makes a move
         
-        done = False
-        turn = 0
-        print("Battle " + str(e) + " started")
-        while not battle.ended:
-            # AI 1 makes a move
-            action_1 = agent_1.act(state_1)
-            decision_1 = create_decision(battle.p1, action_1)  # Create move/switch decision for AI 1
+        if input("Select Player") == "1":
+            player = battle.p1
+        else:
+            player = battle.p2
 
-            # AI 2 makes a move
-            action_2 = agent_2.act(state_2)
-            decision_2 = create_decision(battle.p2, action_2)  # Create move/switch decision for AI 2
-            
-            # Execute turn
-            sim.do_turn(battle)
-            
-            # Update state for both sides
-            next_state_1 = encode_battle_state(battle)
-            next_state_2 = encode_battle_state(battle)
-            
-            # Check for rewards and game status
-            reward_1, reward_2, done = evaluate_battle_outcome(battle)
+        Choice = input("Damage [0] Heal [1] Switch [2] Status [3] Terrain [4] Hazard [5] Weather [6] Trickroom [7] Incriment Turn [8] End Turn [9] ")
+        match Choice:
+            case "0":
 
-            # Remember the experience
-            agent_1.remember(np.array(list(state_1.values())), decision_1, reward_1, np.array(list(next_state_1.values())), done)
-            agent_2.remember(np.array(list(state_2.values())), decision_2, reward_2, np.array(list(next_state_2.values())), done)
+                ind = input("Select Pokemon:", player.pokemon)
 
-            
-            # Update the states for the next turn
-            state_1 = next_state_1
-            state_2 = next_state_2
+                d = input("Enter Damage")
+                Pokemon.damage( player.pokemon[ind], int(d))
 
-            turn += 1
-            if turn > 100:
-                print(state_1)
-                sys.exit("Battle reached max number of allowed turns")
-            if done:
-                print(f"Episode: {e+1}/{episodes}, Turns: {turn}, Epsilon: {agent_1.epsilon:.2f}")
 
-        # Train both agents
-        agent_1.replay()
-        agent_2.replay()
+            case "1":
+                ind = input("Select Pokemon:", player.pokemon)
 
-        if e % 100 == 0:
-            agent_1.save('red_dqn_{}.weights.h5'.format(e))
-            agent_2.save('blue_dqn_{}.weights.h5'.format(e))
-        # if agent_1.replay() < 3:
-        #     done_1 = True
+                d = input("Enter healing")
+                Pokemon.damage( player.pokemon[ind], int(d))
+            case "2":
+                ind = input("Select Pokemon:", player.pokemon)
 
-        # if agent_2.replay() < 3:    
-        #     done_2 = True
+                player.active_pokemon = [player.pokemon[ind]]
 
-        # if (done_1 and done_2):
-        #     i += 1
-        #     if i > 20:
-        #         break
+            case "3":
+                ind = input("Select Pokemon:", player.pokemon)
+                s = input("Enter Status (brn, par, psn, slp, tox or nothing)")
+                player.pokemon[ind].status = s
+
+            case "4":
+                terrain = input("Select Terrain (grassy, electric, psychic, misty):", player.pokemon)
+                battle.terrain = terrain
+            case "5":
+                hazard = input("Select Hazard to Toggle: (spikes, toxic_spikes, stealth_rock, sticky_web, tailwind)", player.pokemon)
+                if hazard == "spikes":
+                    player.spikes = not player.spikes
+                elif hazard == "toxic_spikes":
+                    player.toxic_spikes = not player.toxic_spikes
+                elif hazard == "stealth_rock":
+                    player.stealth_rock = not player.stealth_rock
+                elif hazard == "sticky_web":    
+                    player.sticky_web = not player.sticky_web
+                elif hazard == "tailwind":
+                    player.tailwind = not player.tailwind
+                    turns_remaining = input("Enter number of turns remaining")
+                    player.tailwind_n = int(turns_remaining)
+            case "6":
+                weather = input("Select Weather (sunny, rainy, sandstorm, hail, none):")
+                battle.weather = weather
+            case "7":
+                turns = input("Enter number of turns remaining")
+                player.trickroom_n = int(turns)
+                if turns > 0:
+                    player.trickroom = True
+                else:
+                    player.trickroom = False
+            case "8":
+                battle.turn += 1
+            case _:
+                print("Doing nothing")
+                print("_______________________")
+
+        state = encode_battle_state(battle)
+        Model_prediction =agent_1.model.predict(state)
+        print("_______________________")
+        print("Moves", battle.p1.active_pokemon[0].moves, "Model Prediction", Model_prediction[:4])
+        print("Switches", battle.p1.pokemon, "Model Prediction", Model_prediction[4:])
         
-    # Save models after training
-    agent_1.save('red_dqn.weights.h5')
-    agent_2.save('blue_dqn.weights.h5')
+        
+    return
 
-    agent_1.plot_loss()
-    agent_2.plot_loss()
 
 # Helper function to encode the battle state into a usable format for the model
 def encode_battle_state(battle: sim.Battle):
@@ -272,9 +273,8 @@ if __name__ == "__main__":
     team_1 = parse_pokemon_file("examples/henry.txt")
 
     team_2 = parse_pokemon_file("examples/jasper.txt")
-# pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
 
-    pokemon_battle_training(episodes=500, team_1=team_1, team_2=team_2)
+    start_battle(team_1=team_1, team_2=team_2)
 
 
 
