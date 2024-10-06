@@ -1,1 +1,5 @@
 pypokedex
+matplotlib
+tensorflow
+numpy
+collections
