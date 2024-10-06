@@ -1,0 +1,63 @@
+Charizard @ Life Orb  
+Ability: Solar Power  
+Tera Type: Fire  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Air Slash  
+- Solar Beam  
+- Fire Pledge  
+- Protect  
+
+Blastoise @ Iapapa Berry  
+Ability: Torrent  
+Tera Type: Water  
+EVs: 252 HP / 4 SpA / 252 SpD  
+Calm Nature  
+IVs: 0 Atk  
+- Water Pledge  
+- Surf
+- Iron Defense  
+- Protect
+
+Venusaur @ Sitrus Berry  
+Ability: Overgrow  
+Tera Type: Grass  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Grass Pledge  
+- Sludge Bomb  
+- Sleep Powder  
+- Protect  
+
+Pikachu @ Light Ball  
+Ability: Lightning Rod  
+Tera Type: Electric  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Jolly Nature  
+- Nuzzle  
+- Light Screen  
+- Fake Out  
+- Volt Switch
+
+Snorlax @ Assault Vest  
+Ability: Thick Fat  
+Tera Type: Normal  
+EVs: 252 HP / 252 Atk / 4 SpD  
+Adamant Nature  
+- Fire Punch  
+- Rock Slide  
+- Hammer Arm  
+- Double-Edge  
+
+Lapras @ Leftovers  
+Ability: Water Absorb  
+Tera Type: Water  
+EVs: 252 HP / 4 Atk / 160 Def / 88 SpD  
+Relaxed Nature  
+- Surf 
+- Waterfall  
+- Ice Beam  
+- Protect  
+

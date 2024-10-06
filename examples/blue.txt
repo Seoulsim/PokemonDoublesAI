@@ -1,0 +1,57 @@
+Charizard @ Iapapa Berry  
+Ability: Solar Power  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Modest Nature  
+IVs: 0 Atk  
+- Air Slash  
+- Flamethrower  
+- Protect  
+- Dragon Dance  
+
+Latios @ Soul Dew  
+Ability: Levitate  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Ice Beam  
+- Draco Meteor  
+- Thunder  
+- Psychic  
+
+Exeggutor-Alola @ Aguav Berry  
+Ability: Harvest  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Modest Nature  
+IVs: 0 Atk  
+- Draco Meteor  
+- Leaf Storm  
+- Flamethrower  
+- Giga Drain  
+
+Arcanine @ Life Orb  
+Ability: Intimidate  
+EVs: 252 Atk / 4 Def / 252 Spe  
+Jolly Nature  
+- Flare Blitz  
+- Wild Charge  
+- Extreme Speed  
+- Morning Sun  
+
+Lucario @ Black Belt  
+Ability: Justified  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Jolly Nature  
+- Swords Dance  
+- Meteor Mash  
+- Close Combat  
+- Bullet Punch  
+
+Gyarados @ Figy Berry  
+Ability: Moxie  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Jolly Nature  
+- Dragon Dance  
+- Bounce  
+- Waterfall  
+- Earthquake  
+
