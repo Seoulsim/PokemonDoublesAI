@@ -62,7 +62,7 @@ def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
             state_2 = next_state_2
 
             turn += 1
-            if turn > 100:
+            if turn > 200:
                 print(state_1)
                 sys.exit("Battle reached max number of allowed turns")
             if done:
@@ -241,6 +241,16 @@ def evaluate_battle_outcome(battle):
     return reward_1, reward_2, done
 
 # Helper function to create a decision (move/switch) based on action
+def make_switch_decision(P:Player, action):
+    lst = [(P.pokemon[i], action[0][i + 4]) for i in range(len(P.pokemon))]
+    sorted_pokemon = sorted(lst, key=lambda x: x[1], reverse=True)
+    for pokemon, _ in sorted_pokemon:
+
+        if pokemon.fainted == False and pokemon != P.active_pokemon[0]:
+            # print(pokemon.position)
+            P.choice = Decision('switch', pokemon.position)
+            return 4 + pokemon.position
+
 def create_decision(P:Player, action):
     # Action is a Q array of length 9 returned by the model
     # Example placeholder: action 0 is a move, action 1 is a switch, etc.
@@ -250,36 +260,38 @@ def create_decision(P:Player, action):
     for i in range(n):
 
         if P.request == 'switch':
-            lst = [(P.pokemon[i], action[0][i + 4]) for i in range(len(P.pokemon))]
-            sorted_pokemon = sorted(lst, key=lambda x: x[1], reverse=True)
-            for pokemon, _ in sorted_pokemon:
-
-                if pokemon.fainted == False:
-                    # print(pokemon.position)
-                    P.choice = Decision('switch', pokemon.position)
-                    return 4 + pokemon.position
+            return make_switch_decision(P, action)
 
         elif P.request == 'pass':
             P.choice = Decision('pass', 0)
             return np.argmax(action[0])
 
         elif P.request == 'move':
-            lst = [(P.active_pokemon[0].moves[i], action[i]) for i in range(n)]
+            # if its a move, you can both move and switch
+            moves = len(P.active_pokemon[i].moves)
+            # print(moves)
+            # print(action)
+            vec = action[0] - np.min(action[0])
+            move_distribution = vec / np.sum(vec)
 
-            if len(P.active_pokemon[i].moves) > 0:
-                moves = len(P.active_pokemon[i].moves)
-                # print(moves)
-                # print(action)
-                vec = action[0][:moves] - np.min(action[0][:moves])
+            rand_int = np.random.choice(10, 1, p=move_distribution)[0]
+
+            # P.choice = Decision('move', rand_int % 4)
+
+            if rand_int < 4:
+                P.choice = Decision('move', rand_int)
+            elif rand_int > 4 and(pokemon_left(P) == 1 and P.active_pokemon[i].hp > 0):
+                vec = action[0][:4] - np.min(action[0][:4])
                 move_distribution = vec / np.sum(vec)
+                forced_move = np.random.choice(4, 1, p=move_distribution)[0]
+                P.choice = Decision('move', forced_move)
 
-                rand_int = np.random.choice(moves, 1, p=move_distribution)
-
-                P.choice = Decision('move', rand_int[0])
-
-                return rand_int[0]
             else:
-                sys.exit('No moves!')
+                P.request == 'switch'
+                make_switch_decision(P, action)
+
+            return rand_int
+
     return -1
 
 if __name__ == "__main__":

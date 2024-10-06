@@ -30,8 +30,8 @@ def start_battle(team_1=None, team_2=None, model_path   = None):
         Choice = input("Set HP [0], Switch [2], Status [3], Terrain [4], Hazard [5], Weather [6], Trickroom [7], Incriment Turn [8], Change Stat [9], exit [e]\n")
         match Choice:
             case "0":
-                print("Select Pokemon\n")
                 print([p.name for p in player.pokemon])
+                print("Select Pokemon\n")
                 ind = input("")
 
                 d = input("Enter Curr HP\n")
@@ -39,13 +39,15 @@ def start_battle(team_1=None, team_2=None, model_path   = None):
                 damage( player.pokemon[int(ind)], int(d))
 
             case "2":
-                ind = int(input("Select Pokemon\n"))
                 print([p.name for p in player.pokemon])
+                ind = int(input("Select Pokemon\n"))
+                
                 player.active_pokemon = [player.pokemon[ind]]
 
             case "3":
-                ind = input("Select Pokemon\n")
                 print([p.name for p in player.pokemon])
+                ind = input("Select Pokemon\n")
+                
                 s = input("Enter Status (brn, par, psn, slp, tox or nothing)")
                 player.pokemon[int(ind)].status = s
 
