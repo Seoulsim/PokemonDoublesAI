@@ -13,6 +13,7 @@ from util.parser import parse_pokemon_file
 def start_battle(team_1=None, team_2=None, model_path   = None):
 
     agent_1 = PokemonDQN()
+    agent_1.epsilon = 0
     # Create a battle object
     battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=False)
     if model_path is not None:
@@ -20,42 +21,39 @@ def start_battle(team_1=None, team_2=None, model_path   = None):
 
     while True:
         # AI 1 makes a move
-        
-        if input("Select Player") == "1":
+        p = input("Select Player\n")
+        if p == "1":
             player = battle.p1
         else:
             player = battle.p2
 
-        Choice = input("Damage [0] Heal [1] Switch [2] Status [3] Terrain [4] Hazard [5] Weather [6] Trickroom [7] Incriment Turn [8] End Turn [9] ")
+        Choice = input("Set HP [0], Switch [2], Status [3], Terrain [4], Hazard [5], Weather [6], Trickroom [7], Incriment Turn [8], Change Stat [9], exit [e]\n")
         match Choice:
             case "0":
+                print("Select Pokemon\n")
+                print([p.name for p in player.pokemon])
+                ind = input("")
 
-                ind = input("Select Pokemon:", player.pokemon)
+                d = input("Enter Curr HP\n")
+                damage( player.pokemon[int(ind)], -1000)
+                damage( player.pokemon[int(ind)], int(d))
 
-                d = input("Enter Damage")
-                Pokemon.damage( player.pokemon[ind], int(d))
-
-
-            case "1":
-                ind = input("Select Pokemon:", player.pokemon)
-
-                d = input("Enter healing")
-                Pokemon.damage( player.pokemon[ind], int(d))
             case "2":
-                ind = input("Select Pokemon:", player.pokemon)
-
+                ind = int(input("Select Pokemon\n"))
+                print([p.name for p in player.pokemon])
                 player.active_pokemon = [player.pokemon[ind]]
 
             case "3":
-                ind = input("Select Pokemon:", player.pokemon)
+                ind = input("Select Pokemon\n")
+                print([p.name for p in player.pokemon])
                 s = input("Enter Status (brn, par, psn, slp, tox or nothing)")
-                player.pokemon[ind].status = s
+                player.pokemon[int(ind)].status = s
 
             case "4":
-                terrain = input("Select Terrain (grassy, electric, psychic, misty):", player.pokemon)
+                terrain = input("Select Terrain (grassy, electric, psychic, misty)\n")
                 battle.terrain = terrain
             case "5":
-                hazard = input("Select Hazard to Toggle: (spikes, toxic_spikes, stealth_rock, sticky_web, tailwind)", player.pokemon)
+                hazard = input("Select Hazard to Toggle: (spikes, toxic_spikes, stealth_rock, sticky_web, tailwind)\n")
                 if hazard == "spikes":
                     player.spikes = not player.spikes
                 elif hazard == "toxic_spikes":
@@ -66,29 +64,64 @@ def start_battle(team_1=None, team_2=None, model_path   = None):
                     player.sticky_web = not player.sticky_web
                 elif hazard == "tailwind":
                     player.tailwind = not player.tailwind
-                    turns_remaining = input("Enter number of turns remaining")
+                    turns_remaining = input("Enter number of turns remaining\n")
                     player.tailwind_n = int(turns_remaining)
             case "6":
-                weather = input("Select Weather (sunny, rainy, sandstorm, hail, none):")
+                weather = input("Select Weather (sunny, rainy, sandstorm, hail, none)\n")
                 battle.weather = weather
             case "7":
-                turns = input("Enter number of turns remaining")
+                turns = input("Enter number of turns remaining\n")
                 player.trickroom_n = int(turns)
                 if turns > 0:
                     player.trickroom = True
                 else:
                     player.trickroom = False
             case "8":
+                print("Incrementing Turn\n")
                 battle.turn += 1
+            case "9":
+                print([p.name for p in player.pokemon])
+                ind = input("Select Pokemon\n")
+                
+                stat = input("Select Stat to Change (atk, def, spa, spd, spe, evasion, accuracy)\n\n")
+                mult = float(input("Enter Multiplier\n"))
+
+                player.pokemon[int(ind)].boosts[stat] = mult
+            case "e":
+                print("Exiting")
+                print("_______________________")
+                break
             case _:
                 print("Doing nothing")
                 print("_______________________")
 
         state = encode_battle_state(battle)
-        Model_prediction =agent_1.model.predict(state)
+        state = np.array(list(state.values()))
+        print(state.shape)
+        state = state.reshape(1, -1)
+        action = agent_1.model.predict(state)
         print("_______________________")
-        print("Moves", battle.p1.active_pokemon[0].moves, "Model Prediction", Model_prediction[:4])
-        print("Switches", battle.p1.pokemon, "Model Prediction", Model_prediction[4:])
+        print("Moves")
+        print(battle.p1.active_pokemon[0].moves)
+
+
+        moves = 4
+        # print(moves)
+        # print(action)
+        vec = action[0][:moves] - np.min(action[0][:moves])
+        move_distribution = vec / np.sum(vec)
+
+        rand_int_move = np.random.choice(moves, 1, p=move_distribution)
+
+        vec = action[0][moves:] - np.min(action[0][moves:])
+        switch_distribution = vec / np.sum(vec)
+
+        rand_int_switch = np.random.choice(6, 1, p=switch_distribution)
+
+        print("Model Prediction: Use move", rand_int_move)
+        print("_______________________")
+        print("Switches", [p.name for p in battle.p1.pokemon])
+        print("Model Prediction: Switch", rand_int_switch)
         
         
     return
@@ -273,8 +306,8 @@ if __name__ == "__main__":
     team_1 = parse_pokemon_file("examples/henry.txt")
 
     team_2 = parse_pokemon_file("examples/jasper.txt")
-
-    start_battle(team_1=team_1, team_2=team_2)
+    args = sys.argv
+    start_battle(team_1=team_1, team_2=team_2, model_path=args[1])
 
 
 

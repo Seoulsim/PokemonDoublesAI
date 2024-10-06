@@ -19,6 +19,10 @@ def compare(episodes=100, team_1=None, team_2=None, model1=None, model2=None):
     agent_1 = PokemonDQN()
     agent_2 = PokemonDQN()
 
+    agent_1.epsilon = 0
+    agent_2.epsilon = 0
+    
+
     if model1 is not None:
         agent_1.model.load_weights(model1)
     if model2 is not None:
@@ -59,7 +63,9 @@ def compare(episodes=100, team_1=None, team_2=None, model1=None, model2=None):
                 print("WR:", win_loss / (e + 1))
 
 if __name__ == "__main__":
+    args = sys.argv
+
     team_1 = parse_pokemon_file("examples/henry.txt")
 
     team_2 = parse_pokemon_file("examples/jasper.txt")
-    compare(team_1=team_1, team_2=team_2, model1="out/blue_dqn.keras", model2="out/red_dqn.keras")
+    compare(team_1=team_1, team_2=team_2, model1=args[1], model2=args[2], episodes=int(args[3]))

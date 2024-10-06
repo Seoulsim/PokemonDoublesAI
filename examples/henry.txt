@@ -1,0 +1,61 @@
+Landorus-Therian @ Choice Scarf  
+Ability: Intimidate  
+Tera Type: Fighting  
+EVs: 232 Atk / 68 Def / 208 Spe  
+Jolly Nature  
+- Earthquake  
+- Explosion  
+- Stone Edge  
+- U-turn  
+
+Rotom-Wash @ Wiki Berry  
+Ability: Levitate
+Tera Type: Fighting    
+EVs: 252 HP / 200 Def / 56 Spe  
+Bold Nature  
+IVs: 0 Atk  
+- Hydro Pump  
+- Defog  
+- Will-O-Wisp  
+- Volt Switch  
+
+Hoopa-Unbound @ Choice Band  
+Ability: Magician  
+Tera Type: Fighting  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Jolly Nature  
+- Hyperspace Fury  
+- Gunk Shot  
+- Zen Headbutt  
+- Drain Punch  
+
+Tapu Bulu @ Leftovers  
+Ability: Grassy Surge  
+Tera Type: Fighting  
+EVs: 248 HP / 8 Def / 252 SpD  
+Careful Nature  
+- Horn Leech  
+- Swords Dance  
+- Superpower  
+- Protect  
+
+Heatran @ Leftovers  
+Ability: Flash Fire  
+Tera Type: Fighting  
+EVs: 252 HP / 56 SpA / 152 SpD / 48 Spe  
+Calm Nature  
+IVs: 0 Atk  
+- Magma Storm  
+- Stealth Rock  
+- Earth Power  
+- Taunt  
+
+Kyurem-Black @ Figy Berry  
+Ability: Teravolt  
+Tera Type: Fighting  
+EVs: 252 Atk / 4 SpA / 252 Spe  
+Naive Nature  
+- Freeze Shock  
+- Fusion Bolt  
+- Ice Beam  
+- Roost  

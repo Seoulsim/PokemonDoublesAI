@@ -23,7 +23,7 @@ def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
 
     i = 0
 
-    for e in range(episodes):
+    for e in range(1, episodes + 1):
         # Create a battle object
         battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=False)
 
@@ -66,15 +66,16 @@ def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
                 print(state_1)
                 sys.exit("Battle reached max number of allowed turns")
             if done:
-                print(f"Episode: {e+1}/{episodes}, Turns: {turn}, Epsilon: {agent_1.epsilon:.2f}")
+                print(f"Episode: {e}/{episodes}, Turns: {turn}, Epsilon: {agent_1.epsilon:.2f}")
 
         # Train both agents
-        agent_1.replay()
-        agent_2.replay()
+        if e % 50 == 0:
+            agent_1.replay()
+            agent_2.replay()
 
         if e % 100 == 0:
-            agent_1.save('red_dqn_{}.weights.h5'.format(e))
-            agent_2.save('blue_dqn_{}.weights.h5'.format(e))
+            agent_1.save('out/red_dqn_{}.keras'.format(e))
+            agent_2.save('out/blue_dqn_{}.keras'.format(e))
         # if agent_1.replay() < 3:
         #     done_1 = True
 
@@ -194,7 +195,7 @@ def evaluate_battle_outcome(battle):
     hp1_heuristic = 0  # Replace with actual reward logic
     hp2_heuristic = 0
     done = battle.ended  # Replace with actual game over condition
-    
+    stat_bonus = 0.1
     for pokemon in battle.p1.pokemon:
         if pokemon.hp > 0:
             hp1_heuristic += 1
@@ -202,16 +203,17 @@ def evaluate_battle_outcome(battle):
             if pokemon.status != '':
                 # TODO: Update Para and Burn to be based off of the amount of speed and atk reduced
                 if pokemon.status == "slp":
-                    hp2_heuristic += 0.6 * pokemon.hp / pokemon.maxhp
+                    hp2_heuristic += 0.6 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "par":
-                    hp2_heuristic += 0.3 * pokemon.hp / pokemon.maxhp
+                    hp2_heuristic += 0.3 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "psn":
-                    hp2_heuristic += 0.1 * pokemon.hp / pokemon.maxhp
+                    hp2_heuristic += 0.1 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "brn":
-                    hp2_heuristic += 0.3 * pokemon.hp / pokemon.maxhp
+                    hp2_heuristic += 0.3 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "frz":
-                    hp2_heuristic += 0.6 * pokemon.hp / pokemon.maxhp
-
+                    hp2_heuristic += 0.6 * pokemon.hp / pokemon.maxhp * stat_bonus
+            for stat in pokemon.boosts:
+                hp1_heuristic += pokemon.boosts[stat] * pokemon.hp / pokemon.maxhp * stat_bonus
     for pokemon in battle.p2.pokemon:
         if pokemon.hp > 0:
             hp2_heuristic += 1
@@ -219,18 +221,20 @@ def evaluate_battle_outcome(battle):
             if pokemon.status != '':
                 # TODO: Update Para and Burn to be based off of the amount of speed and atk reduced
                 if pokemon.status == "slp":
-                    hp1_heuristic += 0.6 * pokemon.hp / pokemon.maxhp
+                    hp1_heuristic += 0.6 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "par":
-                    hp1_heuristic += 0.3 * pokemon.hp / pokemon.maxhp
+                    hp1_heuristic += 0.3 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "psn":
-                    hp1_heuristic += 0.1 * pokemon.hp / pokemon.maxhp
+                    hp1_heuristic += 0.1 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "brn":
-                    hp1_heuristic += 0.3 * pokemon.hp / pokemon.maxhp
+                    hp1_heuristic += 0.3 * pokemon.hp / pokemon.maxhp * stat_bonus
                 elif pokemon.status == "frz":
-                    hp1_heuristic += 0.6 * pokemon.hp / pokemon.maxhp
+                    hp1_heuristic += 0.6 * pokemon.hp / pokemon.maxhp * stat_bonus
+            for stat in pokemon.boosts:
+                hp2_heuristic += pokemon.boosts[stat] * pokemon.hp / pokemon.maxhp * stat_bonus
 
-    reward_1 = hp1_heuristic - hp2_heuristic
-    reward_2 = hp2_heuristic - hp1_heuristic
+    reward_1 = (hp1_heuristic - hp2_heuristic) / 10
+    reward_2 = (hp2_heuristic - hp1_heuristic) / 10
     if done:
         reward_1 += 10 if battle.winner == "p1" else -10
         reward_2 += 10 if battle.winner == "p2" else -10
@@ -284,7 +288,7 @@ if __name__ == "__main__":
     team_2 = parse_pokemon_file("examples/jasper.txt")
 # pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
 
-    pokemon_battle_training(episodes=1, team_1=team_1, team_2=team_2)
+    pokemon_battle_training(episodes=5000, team_1=team_1, team_2=team_2)
 
 
 

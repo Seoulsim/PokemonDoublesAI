@@ -1,0 +1,61 @@
+Scizor @ Leftovers  
+Ability: Technician  
+Tera Type: Fighting  
+EVs: 240 HP / 252 Atk / 16 Spe  
+Adamant Nature  
+- Swords Dance  
+- U-turn  
+- Bullet Punch  
+- Roost  
+
+Kyurem-Black @ Icium Z  
+Ability: Teravolt  
+Tera Type: Fighting  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Hasty Nature  
+- Freeze Shock  
+- Ice Beam  
+- Fusion Bolt  
+- Hone Claws  
+
+Tapu Fini @ Leftovers  
+Ability: Misty Surge  
+Tera Type: Fighting  
+EVs: 252 HP / 252 Def / 4 SpD  
+Bold Nature  
+IVs: 0 Atk  
+- Moonblast  
+- Surf  
+- Defog  
+- Taunt  
+
+Weavile (M) @ Choice Band  
+Ability: Pressure 
+Tera Type: Fighting   
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Jolly Nature  
+- Knock Off  
+- Pursuit  
+- Icicle Crash  
+- Beat Up  
+
+Heatran (F) @ Leftovers  
+Ability: Flash Fire  
+Tera Type: Fighting  
+EVs: 252 SpA / 4 SpD / 252 Spe  
+Timid Nature  
+IVs: 0 Atk  
+- Stealth Rock  
+- Lava Plume  
+- Earth Power  
+- Taunt  
+
+Landorus-Therian @ Choice Scarf  
+Ability: Intimidate  
+Tera Type: Fighting  
+EVs: 252 Atk / 4 SpD / 252 Spe  
+Jolly Nature  
+- Earthquake  
+- Stone Edge  
+- Explosion  
+- U-turn  
