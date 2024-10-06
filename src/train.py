@@ -5,43 +5,40 @@ import numpy as np
 import sim.pokemon as Pokemon
 from sim.player import *
 
+from util.parser import parse_pokemon_file
+
 # Pokemon Battle AI training with Battle class integration
 
 
-def pokemon_battle_training(episodes=1000, team_1=None, team_2=None):
-    state_size = 128  # Define according to your battle state encoding
-    action_size = 10  # Define according to available actions (moves, switches)
+def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
+
+    print(team_1)
+    print(team_2)
     
-    agent_1 = PokemonDQN(state_size=state_size, action_size=action_size)
-    agent_2 = PokemonDQN(state_size=state_size, action_size=action_size)
+    agent_1 = PokemonDQN()
+    agent_2 = PokemonDQN()
     
     for e in range(episodes):
         # Create a battle object
-        battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=True)
-
-        # Join teams to the battle
-        battle.join(side_id=0, team=team_1)
-        battle.join(side_id=1, team=team_2)
+        battle = sim.Battle('single', 'Red', team_1, 'Blue', team_2, debug=False)
 
         state_1 = encode_battle_state(battle)  # Encode battle state for side 0
         state_2 = encode_battle_state(battle)  # Encode battle state for side 1
         
         done = False
         turn = 0
-        
-        while not done:
+        print("Battle " + str(e) + " started")
+        while not battle.ended:
             # AI 1 makes a move
             action_1 = agent_1.act(state_1)
             decision_1 = create_decision(battle.p1, action_1)  # Create move/switch decision for AI 1
-            battle.choose(0, decision_1)
 
             # AI 2 makes a move
             action_2 = agent_2.act(state_2)
             decision_2 = create_decision(battle.p2, action_2)  # Create move/switch decision for AI 2
-            battle.choose(1, decision_2)
             
             # Execute turn
-            battle.do_turn()
+            sim.do_turn(battle)
             
             # Update state for both sides
             next_state_1 = encode_battle_state(battle)
@@ -51,25 +48,37 @@ def pokemon_battle_training(episodes=1000, team_1=None, team_2=None):
             reward_1, reward_2, done = evaluate_battle_outcome(battle)
 
             # Remember the experience
-            agent_1.remember(state_1, action_1, reward_1, next_state_1, done)
-            agent_2.remember(state_2, action_2, reward_2, next_state_2, done)
+            agent_1.remember(np.array(list(state_1.values())), decision_1, reward_1, np.array(list(next_state_1.values())), done)
+            agent_2.remember(np.array(list(state_2.values())), decision_2, reward_2, np.array(list(next_state_2.values())), done)
+
             
             # Update the states for the next turn
             state_1 = next_state_1
             state_2 = next_state_2
 
             turn += 1
+            if turn > 500:
+                print(state_1)
+                sys.exit("Battle reached max number of allowed turns")
             if done:
                 print(f"Episode: {e+1}/{episodes}, Turns: {turn}, Epsilon: {agent_1.epsilon:.2f}")
                 break
+
+            # print("-------")
+            # print("P1: " + str(sim.pokemon_left(battle.p1)))
+            # print("P2: " + str(sim.pokemon_left(battle.p2)))
+            # if battle.p1.active_pokemon[i]
 
         # Train both agents
         agent_1.replay()
         agent_2.replay()
 
     # Save models after training
-    agent_1.save('pokemon_dqn_1.h5')
-    agent_2.save('pokemon_dqn_2.h5')
+    agent_1.save('red_dqn.weights.keras')
+    agent_2.save('blue_dqn.weights.keras')
+
+    agent_1.plot_loss()
+    agent_2.plot_loss()
 
 # Helper function to encode the battle state into a usable format for the model
 def encode_battle_state(battle: sim.Battle):
@@ -120,7 +129,7 @@ def encode_battle_state(battle: sim.Battle):
     state["trick_room"] = int(battle.trickroom)
     state["trick_room_turns"] = battle.trickroom_n
 
-    pokemon_statuses = ["burn", "poison", "paralysis", "freeze", "sleep", ""]
+    pokemon_statuses = ["brn", "psn", "par", "frz", "slp", ""]
 
     active_pokemons = battle.p1.active_pokemon
     for p in active_pokemons:
@@ -131,13 +140,13 @@ def encode_battle_state(battle: sim.Battle):
                 elif type(field) == bool:
                     state[field] = int(getattr(p, field))
 
-        state["pokemon_1_attack"] = Pokemon.get_attack(p, weather = battle.weather, crit = False)
-        state["pokemon_1_defense"] = Pokemon.get_defense(p, terrain = battle.terrain, crit = False)
-        state["pokemon_1_specialattack"] = Pokemon.get_specialattack(p, weather = battle.weather, crit = False)
-        state["pokemon_1_specialdefense"] = Pokemon.get_specialdefense(p, weather = battle.weather, crit = False)
-        state["pokemon_1_speed"] = Pokemon.get_speed(p, weather = battle.weather, terrain = battle.terrain, trickroom = battle.trickroom, tailwind = battle.p1.tailwind)
-        state["pokemon_1_accuracy"] = Pokemon.get_accuracy(p)
-        state["pokemon_1_evasion"] = Pokemon.get_evasion(p)
+        state["pokemon_1_attack"] = get_attack(p, weather = battle.weather, crit = False)
+        state["pokemon_1_defense"] = get_defense(p, terrain = battle.terrain, crit = False)
+        state["pokemon_1_specialattack"] = get_specialattack(p, weather = battle.weather, crit = False)
+        state["pokemon_1_specialdefense"] = get_specialdefense(p, weather = battle.weather, crit = False)
+        state["pokemon_1_speed"] = get_speed(p, weather = battle.weather, terrain = battle.terrain, trickroom = battle.trickroom, tailwind = battle.p1.tailwind)
+        state["pokemon_1_accuracy"] = get_accuracy(p)
+        state["pokemon_1_evasion"] = get_evasion(p)
 
     active_pokemons = battle.p2.active_pokemon
     for p in active_pokemons:
@@ -148,13 +157,13 @@ def encode_battle_state(battle: sim.Battle):
                 elif type(field) == bool:
                     state[field] = int(getattr(p, field))
 
-        state["pokemon_2_attack"] = Pokemon.get_attack(p, weather = battle.weather, crit = False)
-        state["pokemon_2_defense"] = Pokemon.get_defense(p, terrain = battle.terrain, crit = False)
-        state["pokemon_2_specialattack"] = Pokemon.get_specialattack(p, weather = battle.weather, crit = False)
-        state["pokemon_2_specialdefense"] = Pokemon.get_specialdefense(p, weather = battle.weather, crit = False)
-        state["pokemon_2_speed"] = Pokemon.get_speed(p, weather = battle.weather, terrain = battle.terrain, trickroom = battle.trickroom, tailwind = battle.p2.tailwind)
-        state["pokemon_2_accuracy"] = Pokemon.get_accuracy(p)
-        state["pokemon_2_evasion"] = Pokemon.get_evasion(p)
+        state["pokemon_2_attack"] = get_attack(p, weather = battle.weather, crit = False)
+        state["pokemon_2_defense"] = get_defense(p, terrain = battle.terrain, crit = False)
+        state["pokemon_2_specialattack"] = get_specialattack(p, weather = battle.weather, crit = False)
+        state["pokemon_2_specialdefense"] = get_specialdefense(p, weather = battle.weather, crit = False)
+        state["pokemon_2_speed"] = get_speed(p, weather = battle.weather, terrain = battle.terrain, trickroom = battle.trickroom, tailwind = battle.p2.tailwind)
+        state["pokemon_2_accuracy"] = get_accuracy(p)
+        state["pokemon_2_evasion"] = get_evasion(p)
 
     for pokemon in battle.p1.bench:
         state["pokemon_1_bench_" + str(battle.p1.bench.index(pokemon))] = pokemon.hp
@@ -163,9 +172,6 @@ def encode_battle_state(battle: sim.Battle):
     for pokemon in battle.p2.bench:
         state["pokemon_2_bench_" + str(battle.p2.bench.index(pokemon))] = pokemon.hp
         state["pokemon_2_status"] = pokemon_statuses.index(pokemon.status)
-
-    print(state.values())
-    print(len(state))
     
     return state
 
@@ -208,33 +214,45 @@ def create_decision(P:Player, action):
     for i in range(n):
 
         if P.request == 'switch':
-            lst = [(P.pokemon[i], action[i + 4]) for i in range(n)]
+            lst = [(P.pokemon[i], action[0][i + 4]) for i in range(len(P.pokemon))]
             sorted_pokemon = sorted(lst, key=lambda x: x[1], reverse=True)
-            for pokemon in sorted_pokemon:
+            for pokemon, _ in sorted_pokemon:
+
                 if pokemon.fainted == False:
+                    # print(pokemon.position)
                     P.choice = Decision('switch', pokemon.position)
-                    break
+                    return 4 + pokemon.position
 
         elif P.request == 'pass':
             P.choice = Decision('pass', 0)
+            return np.argmax(action[0])
 
         elif P.request == 'move':
             lst = [(P.active_pokemon[0].moves[i], action[i]) for i in range(n)]
-            sorted_moves = sorted(lst, key=lambda x: x[1], reverse=True)
+
             if len(P.active_pokemon[i].moves) > 0:
-                moves = len(P.active_pokemon[i].moves)-1
-                rand_int = random.choice(moves, 1, action[:moves])
-                P.choice = Decision('move', rand_int)
+                moves = len(P.active_pokemon[i].moves)
+                # print(moves)
+                # print(action)
+                vec = action[0][:moves] - np.min(action[0][:moves])
+                move_distribution = vec / np.sum(vec)
+
+                rand_int = np.random.choice(moves, 1, p=move_distribution)
+
+                P.choice = Decision('move', rand_int[0])
+
+                return rand_int[0]
             else:
                 sys.exit('No moves!')
-    return 
+    return -1
 
+if __name__ == "__main__":
+    team_1 = parse_pokemon_file("examples/red.txt")
+
+    team_2 = parse_pokemon_file("examples/blue.txt")
 # pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
 
-teams = []
-for i in range(2):
-    teams.append(sim.dict_to_team_set(generate_team()))
+    pokemon_battle_training(episodes=1000, team_1=team_1, team_2=team_2)
 
-battle = sim.Battle('single', 'Red', teams[0], 'Blue', teams[1], debug=True)
 
-encode_battle_state(battle)
+
