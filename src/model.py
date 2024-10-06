@@ -101,7 +101,7 @@ class PokemonDQN:
 
     def save(self, name):
         # Save model to file
-        self.model.save_weights(name)
+        self.model.save(name)
     
     def plot_loss(self):
         # Plot the loss over iterations

@@ -87,8 +87,8 @@ def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
         #         break
         
     # Save models after training
-    agent_1.save('red_dqn.weights.h5')
-    agent_2.save('blue_dqn.weights.h5')
+    agent_1.save('out/red_dqn.keras')
+    agent_2.save('out/blue_dqn.keras')
 
     agent_1.plot_loss()
     agent_2.plot_loss()
@@ -217,13 +217,23 @@ def evaluate_battle_outcome(battle):
             hp2_heuristic += 1
             hp2_heuristic += pokemon.hp / pokemon.maxhp
             if pokemon.status != '':
-                hp1_heuristic += 0.5*pokemon.hp / pokemon.maxhp
+                # TODO: Update Para and Burn to be based off of the amount of speed and atk reduced
+                if pokemon.status == "slp":
+                    hp1_heuristic += 0.6 * pokemon.hp / pokemon.maxhp
+                elif pokemon.status == "par":
+                    hp1_heuristic += 0.3 * pokemon.hp / pokemon.maxhp
+                elif pokemon.status == "psn":
+                    hp1_heuristic += 0.1 * pokemon.hp / pokemon.maxhp
+                elif pokemon.status == "brn":
+                    hp1_heuristic += 0.3 * pokemon.hp / pokemon.maxhp
+                elif pokemon.status == "frz":
+                    hp1_heuristic += 0.6 * pokemon.hp / pokemon.maxhp
 
     reward_1 = hp1_heuristic - hp2_heuristic
     reward_2 = hp2_heuristic - hp1_heuristic
     if done:
-        reward_1 += 10 if battle.winner == battle.name1 else -10
-        reward_2 += 10 if battle.winner == battle.name2 else -10
+        reward_1 += 10 if battle.winner == "p1" else -10
+        reward_2 += 10 if battle.winner == "p2" else -10
     return reward_1, reward_2, done
 
 # Helper function to create a decision (move/switch) based on action
@@ -274,7 +284,7 @@ if __name__ == "__main__":
     team_2 = parse_pokemon_file("examples/jasper.txt")
 # pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
 
-    pokemon_battle_training(episodes=500, team_1=team_1, team_2=team_2)
+    pokemon_battle_training(episodes=1, team_1=team_1, team_2=team_2)
 
 
 
