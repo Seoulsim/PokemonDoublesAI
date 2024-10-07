@@ -4,6 +4,7 @@ from src.model import PokemonDQN
 import numpy as np
 import sim.pokemon as Pokemon
 from sim.player import *
+import argparse
 
 from util.parser import parse_pokemon_file
 
@@ -286,12 +287,29 @@ def create_decision(P:Player, action):
     return -1
 
 if __name__ == "__main__":
-    team_1 = parse_pokemon_file("examples/henry.txt")
 
-    team_2 = parse_pokemon_file("examples/jasper.txt")
+    parser = argparse.ArgumentParser(description='Simulate a Pokémon battle between two teams.')
+
+    # Add arguments for team_1_path, team_2_path, model_path, and episodes
+    parser.add_argument('team_1_path', type=str, help='Path to the first team\'s Pokémon file', default='examples/henry.txt')    
+    parser.add_argument('team_2_path', type=str, help='Path to the second team\'s Pokémon file', default='examples/jasper.txt')
+    parser.add_argument('episodes', type=int, help='Number of episodes for the battle', default=1000)
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Access the arguments
+    team_1_path = args.team_1_path
+    team_2_path = args.team_2_path
+    episodes = args.episodes
+
+
+    team_1 = parse_pokemon_file(team_1_path)
+
+    team_2 = parse_pokemon_file(team_2_path)
 # pokemon_battle_training(Battle, episodes=1000, team_1=team_1, team_2=team_2)
 
-    pokemon_battle_training(episodes=5000, team_1=team_1, team_2=team_2)
+    pokemon_battle_training(episodes=episodes, team_1=team_1, team_2=team_2)
 
 
 
