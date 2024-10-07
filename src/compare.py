@@ -70,6 +70,8 @@ if __name__ == "__main__":
     # Add arguments for team_1_path, team_2_path, model_path, and episodes
     parser.add_argument('team_1_path', type=str, help='Path to the first team\'s Pokémon file', default='examples/henry.txt')    
     parser.add_argument('team_2_path', type=str, help='Path to the second team\'s Pokémon file', default='examples/jasper.txt')
+    parser.add_argument('team_1_model', type=str, help='Path to the first team\'s model file', default='out/red_dqn.keras')    
+    parser.add_argument('team_2_model', type=str, help='Path to the second team\'s model file', default='out/blue_dqn.keras')
     parser.add_argument('games', type=int, help='Number of games to play', default=10)
 
     # Parse the arguments
@@ -78,10 +80,12 @@ if __name__ == "__main__":
     # Access the arguments
     team_1_path = args.team_1_path
     team_2_path = args.team_2_path
+    team_1_model = args.team_1_model
+    team_2_model = args.team_2_model
     games = args.games
 
     team_1 = parse_pokemon_file(team_1_path)
 
     team_2 = parse_pokemon_file(team_2_path)
 
-    compare(team_1=team_1, team_2=team_2, model1=args[1], model2=args[2], episodes=games)
+    compare(team_1=team_1, team_2=team_2, model1=team_1_model, model2=team_2_model, episodes=games)
