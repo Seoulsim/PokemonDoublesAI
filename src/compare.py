@@ -5,6 +5,7 @@ import numpy as np
 import sim.pokemon as Pokemon
 from sim.player import *
 from src.train import encode_battle_state, create_decision, evaluate_battle_outcome
+import argparse
 
 from util.parser import parse_pokemon_file
 
@@ -63,9 +64,24 @@ def compare(episodes=100, team_1=None, team_2=None, model1=None, model2=None):
                 print("WR:", win_loss / (e + 1))
 
 if __name__ == "__main__":
-    args = sys.argv
 
-    team_1 = parse_pokemon_file("examples/henry.txt")
+    parser = argparse.ArgumentParser(description='Simulate a Pokémon battle between two teams.')
 
-    team_2 = parse_pokemon_file("examples/jasper.txt")
-    compare(team_1=team_1, team_2=team_2, model1=args[1], model2=args[2], episodes=int(args[3]))
+    # Add arguments for team_1_path, team_2_path, model_path, and episodes
+    parser.add_argument('team_1_path', type=str, help='Path to the first team\'s Pokémon file', default='examples/henry.txt')    
+    parser.add_argument('team_2_path', type=str, help='Path to the second team\'s Pokémon file', default='examples/jasper.txt')
+    parser.add_argument('games', type=int, help='Number of games to play', default=10)
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Access the arguments
+    team_1_path = args.team_1_path
+    team_2_path = args.team_2_path
+    games = args.games
+
+    team_1 = parse_pokemon_file(team_1_path)
+
+    team_2 = parse_pokemon_file(team_2_path)
+
+    compare(team_1=team_1, team_2=team_2, model1=args[1], model2=args[2], episodes=games)
