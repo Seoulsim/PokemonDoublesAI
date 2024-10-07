@@ -76,16 +76,7 @@ def pokemon_battle_training(episodes=100, team_1=None, team_2=None):
         if e % 100 == 0:
             agent_1.save('out/red_dqn_{}.keras'.format(e))
             agent_2.save('out/blue_dqn_{}.keras'.format(e))
-        # if agent_1.replay() < 3:
-        #     done_1 = True
 
-        # if agent_2.replay() < 3:    
-        #     done_2 = True
-
-        # if (done_1 and done_2):
-        #     i += 1
-        #     if i > 20:
-        #         break
         
     # Save models after training
     agent_1.save('out/red_dqn.keras')

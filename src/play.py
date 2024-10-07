@@ -99,32 +99,13 @@ def start_battle(team_1=None, team_2=None, model_path   = None):
 
         state = encode_battle_state(battle)
         state = np.array(list(state.values()))
-        print(state.shape)
+
+        
+
         state = state.reshape(1, -1)
         action = agent_1.model.predict(state)
-        print("_______________________")
-        print("Moves")
-        print(battle.p1.active_pokemon[0].moves)
 
-
-        moves = 4
-        # print(moves)
-        # print(action)
-        vec = action[0][:moves] - np.min(action[0][:moves])
-        move_distribution = vec / np.sum(vec)
-
-        rand_int_move = np.random.choice(moves, 1, p=move_distribution)
-
-        vec = action[0][moves:] - np.min(action[0][moves:])
-        switch_distribution = vec / np.sum(vec)
-
-        rand_int_switch = np.random.choice(6, 1, p=switch_distribution)
-
-        print("Model Prediction: Use move", rand_int_move)
-        print("_______________________")
-        print("Switches", [p.name for p in battle.p1.pokemon])
-        print("Model Prediction: Switch", rand_int_switch)
-        
+        print_decision(battle.p1, action)
         
     return
 
@@ -261,6 +242,59 @@ def evaluate_battle_outcome(battle):
         reward_1 += 10 if battle.winner == battle.name1 else -10
         reward_2 += 10 if battle.winner == battle.name2 else -10
     return reward_1, reward_2, done
+
+def make_switch_decision(P:Player, action):
+    lst = [(P.pokemon[i], action[0][i + 4]) for i in range(len(P.pokemon))]
+    sorted_pokemon = sorted(lst, key=lambda x: x[1], reverse=True)
+    switch = None
+    for pokemon, _ in sorted_pokemon:
+
+        if pokemon.fainted == False and pokemon != P.active_pokemon[0]:
+            # print(pokemon.position)
+            # P.choice = Decision('switch', pokemon.position)
+            switch = pokemon
+    print("Switching to " + switch.name + "[" + str(switch.position) + "]!")
+
+def print_decision(P:Player, action):
+    # Action is a Q array of length 9 returned by the model
+    # Example placeholder: action 0 is a move, action 1 is a switch, etc.
+    # convert array of length 9 to a move where index 0 - 3 are moves and 4 - 8 are switches
+    n = len(P.active_pokemon)
+
+    for i in range(n):
+
+        if P.request == 'switch':
+            return make_switch_decision(P, action)
+
+        elif P.request == 'pass':
+            P.choice = Decision('pass', 0)
+            return np.argmax(action[0])
+
+        elif P.request == 'move':
+            # if its a move, you can both move and switch
+            moves = len(P.active_pokemon[i].moves)
+            # print(moves)
+            # print(action)
+            vec = action[0] - np.min(action[0])
+            move_distribution = vec / np.sum(vec)
+
+            rand_int = np.random.choice(10, 1, p=move_distribution)[0]
+
+            # P.choice = Decision('move', rand_int % 4)
+
+            if rand_int < 4:
+                print(P.active_pokemon[i])
+                print(P.active_pokemon[i].name + " used " + P.active_pokemon[i].moves[rand_int] + "!")
+            elif rand_int > 4 and(pokemon_left(P) == 1 and P.active_pokemon[i].hp > 0):
+                vec = action[0][:4] - np.min(action[0][:4])
+                move_distribution = vec / np.sum(vec)
+                forced_move = np.random.choice(4, 1, p=move_distribution)[0]
+                print(P.active_pokemon[i].name + " used " + P.active_pokemon[i].moves[forced_move].name + "!")
+
+            else:
+                P.request == 'switch'
+                make_switch_decision(P, action)
+
 
 # Helper function to create a decision (move/switch) based on action
 def create_decision(P:Player, action):
